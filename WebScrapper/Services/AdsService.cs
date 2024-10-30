@@ -19,63 +19,22 @@ public class AdsService : IAdsService
 
         SetIdsForCurrentAds(scrappedAds, scrapJob);
 
-        var newAds = scrappedAds
-            .Where(x => !existingsAds.Any(y => y.Id == x.Id))
-            .ToList();
+        var newAds = GetNewAds(scrappedAds, existingsAds);
 
-        var distinctNewAds = newAds
+        var genuineAds = GetGenuineAds(newAds, scrapJob);
+
+        var newGenuineDistinctAds = genuineAds
             .DistinctBy(x => x.Id)
             .ToList();
+                
+        SetAdsMetadata(newGenuineDistinctAds, scrapJob);
 
-        SetAdsMetadata(distinctNewAds, scrapJob);
-
-        return distinctNewAds;
+        return newGenuineDistinctAds;
     }
 
     public async Task AddAsync(List<Ad> ads)
     {
-        try
-        {
-            await _adsRepository.CreateAsync(ads);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
-    }
-
-    private static List<Ad> SetAdsMetadata(List<Ad> newAds, ScrapJob scrapJob)
-    {
-        foreach (Ad ad in newAds)
-        {
-            ad.ShouldSendNotification = ShouldSendNotification(ad, scrapJob);
-        }
-
-        return newAds;
-    }
-
-    private static bool ShouldSendNotification(Ad ad, ScrapJob scrapJob)
-    {
-        if (!ContainsRequiredKeywords(ad.Title, scrapJob.MustContainList))
-            return false;
-
-        if (ad.Price.GetPrice() > scrapJob.MaxPrice)
-            return false;
-
-        if (ContainsExcludedKeywords(ad.Title, scrapJob.MustNotContainList))
-            return false;
-
-        return true;
-    }
-
-    private static bool ContainsRequiredKeywords(string title, List<string> mustContainList)
-    {
-        return mustContainList.Any(item => title.Contains(item, StringComparison.InvariantCultureIgnoreCase));
-    }
-
-    private static bool ContainsExcludedKeywords(string title, List<string> mustNotContainList)
-    {
-        return mustNotContainList.Any(item => title.Contains(item, StringComparison.InvariantCultureIgnoreCase));
+        await _adsRepository.CreateAsync(ads);
     }
 
     private static void SetIdsForCurrentAds(List<Ad> currentAds, ScrapJob scrapJob)
@@ -91,5 +50,51 @@ public class AdsService : IAdsService
             ad.Id = ad.Url.GetId();
             ad.ScrapJobId = scrapJob.Id;
         }
+    }
+
+    private static List<Ad> GetNewAds(List<Ad> scrappedAds, List<Ad> existingsAds)
+    {
+        return scrappedAds
+            .Where(x => !existingsAds.Any(y => y.Id == x.Id))
+            .ToList();
+    }
+
+    private static List<Ad> GetGenuineAds(List<Ad> newAds, ScrapJob scrapJob)
+    {
+        return newAds
+            .Where(newAd => IsAdGenuine(newAd, scrapJob))
+            .ToList();
+    }
+
+    private static bool IsAdGenuine(Ad newAd, ScrapJob scrapJob)
+    {
+        return ContainsRequiredKeywords(newAd.Title, scrapJob.MustContainList)
+            && ContainsExcludedKeywords(newAd.Title, scrapJob.MustNotContainList);
+    }
+
+    private static List<Ad> SetAdsMetadata(List<Ad> newAds, ScrapJob scrapJob)
+    {
+        foreach (Ad ad in newAds)
+            ad.ShouldSendNotification = ShouldSendNotification(ad, scrapJob);
+
+        return newAds;
+    }
+
+    private static bool ShouldSendNotification(Ad ad, ScrapJob scrapJob)
+    {
+        if (ad.Price.GetPrice() > scrapJob.MaxPrice)
+            return false;
+
+        return true;
+    }
+
+    private static bool ContainsRequiredKeywords(string title, List<string> mustContainList)
+    {
+        return mustContainList.Any(item => title.Contains(item, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private static bool ContainsExcludedKeywords(string title, List<string> mustNotContainList)
+    {
+        return mustNotContainList.Any(item => title.Contains(item, StringComparison.InvariantCultureIgnoreCase));
     }
 }

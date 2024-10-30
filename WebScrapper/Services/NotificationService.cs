@@ -42,21 +42,28 @@ public class NotificationService : INotificationService
 
     private static string GetHtmlBody(List<Ad> ads)
     {
+        const string htmlStart = "<html><body>";
+        const string htmlEnd = "</body></html>";
+
         var adsText = new StringBuilder();
-        adsText.AppendLine("<html><body>");
+
+        adsText.AppendLine(htmlStart);
 
         foreach (var ad in ads)
-        {
-            adsText.AppendLine($"<p><strong>{ad.Title}</strong></p>");
-            adsText.AppendLine($"<p><strong>Price:</strong> {ad.Price}</p>");
-            adsText.AppendLine($"<p><strong>Location and Date:</strong> {ad.LocationAndDate}</p>");
-            adsText.AppendLine($"<p><strong>Link:</strong> <a href='{ad.Url}'>{ad.Url}</a></p>");
-            adsText.AppendLine($"<p><img src='{ad.ThumbnailUrl}' alt='Thumbnail' /></p>");
-            adsText.AppendLine("<hr>");
-        }
+            AddAdDetailsToHtml(adsText, ad);
 
-        adsText.AppendLine("</body></html>");
+        adsText.AppendLine(htmlEnd);
 
         return adsText.ToString();
+    }
+
+    private static void AddAdDetailsToHtml(StringBuilder adsText, Ad ad)
+    {
+        adsText.AppendLine($"<p><strong>{ad.Title}</strong></p>");
+        adsText.AppendLine($"<p><strong>Price:</strong> {ad.Price}</p>");
+        adsText.AppendLine($"<p><strong>Location and Date:</strong> {ad.LocationAndDate}</p>");
+        adsText.AppendLine($"<p><strong>Link:</strong> <a href='{ad.Url}'>{ad.Url}</a></p>");
+        adsText.AppendLine($"<p><img src='{ad.ThumbnailUrl}' alt='Thumbnail' /></p>");
+        adsText.AppendLine("<hr>");
     }
 }

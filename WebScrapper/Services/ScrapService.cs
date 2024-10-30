@@ -6,7 +6,7 @@ using WebScrapper.Services.Interfaces;
 namespace WebScrapper.Services;
 public class ScrapService : IScrapService
 {
-    private static bool _headless = true;
+    private const bool _headless = true;
 
     public async Task<List<Ad>> GetCurrentAdsFromWebsiteAsync(ScrapJob scrapJob)
     {
@@ -65,8 +65,8 @@ public class ScrapService : IScrapService
     {
         for (int i = 0; i < 50; i++)
         {
-            await page.EvaluateAsync("window.scrollBy(0, 200)"); // Scroll down by 1000 pixels
-            await Task.Delay(500); // Wait 200 ms
+            await page.EvaluateAsync("window.scrollBy(0, 200)");
+            await Task.Delay(500);
         }
     }
 
@@ -74,10 +74,8 @@ public class ScrapService : IScrapService
     {
         await Task.Delay(3000);
 
-        // Wait for the cards to be visible on the page
         await page.WaitForSelectorAsync("div[data-testid='l-card']");
 
-        // Select all card elements
         var cards = await page.QuerySelectorAllAsync("div[data-testid='l-card']");
         return cards;
     }
@@ -125,7 +123,7 @@ public class ScrapService : IScrapService
         var thumbnailElement = await card.QuerySelectorAsync("img[src]");
         ad.ThumbnailUrl = thumbnailElement != null ? await thumbnailElement.GetAttributeAsync("src") : null;
 
-        // Fallback for data-src
+        // Url fallback
         if (ad.ThumbnailUrl == null)
         {
             thumbnailElement = await card.QuerySelectorAsync("img[data-src]");
