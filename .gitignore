@@ -397,10 +397,10 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-# parameters.json
+parameters.json
 
-# parameters.ps1
+parameters.ps1
 
-# local.settings.json
+local.settings.json
 
-# docker-compose.yml
+docker-compose.yml
