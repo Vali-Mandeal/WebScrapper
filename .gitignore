@@ -404,3 +404,8 @@ parameters.ps1
 local.settings.json
 
 docker-compose.yml
+
+Infra/docker-compose.yml
+Infra/parameters.json
+Infra/parameters.ps1
+WebScrapper/local.settings.json
