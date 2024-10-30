@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "value": ""
+    },
+    "name": {
+      "value": ""
+    },
+    "location": {
+      "value": ""
+    },
+    "ftpsState": {
+      "value": ""
+    },
+    "storageAccountName": {
+      "value": ""
+    },
+    "use32BitWorkerProcess": {
+      "value": false
+    },
+    "linuxFxVersion": {
+      "value": ""
+    },
+    "environmentName": {
+      "value": ""
+    },
+    "workspaceName": {
+      "value": ""
+    },
+    "workspaceLocation": {
+      "value": ""
+    },
+    "workloadProfileName": {
+      "value": ""
+    },
+    "resourceConfig": {
+      "value": {
+        "cpu": "",
+        "memory": ""
+      }
+    },
+    "connectionStrings__MongoUrl": {
+      "value": ""
+    },
+    "SmtpSettings__SenderEmail": {
+      "value": ""
+    },
+    "SmtpSettings__SenderPassword": {
+      "value": ""
+    },
+    "SmtpSettings__SmtpHost": {
+      "value": ""
+    },
+    "SmtpSettings__SmtpPort": {
+      "value": ""
+    },
+    "SmtpSettings__SecureSocketOptions": {
+      "value": ""
+    }
+  }
+}

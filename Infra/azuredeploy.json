@@ -1,0 +1,208 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "use32BitWorkerProcess": {
+      "type": "bool"
+    },
+    "ftpsState": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "linuxFxVersion": {
+      "type": "string"
+    },
+    "environmentName": {
+      "type": "string"
+    },
+    "workspaceName": {
+      "type": "string"
+    },
+    "workspaceLocation": {
+      "type": "string"
+    },
+    "workloadProfileName": {
+      "type": "string"
+    },
+    "resourceConfig": {
+      "type": "object"
+    },
+    "connectionStrings__MongoUrl": {
+      "type": "string"
+    },
+    "SmtpSettings__SenderEmail": {
+      "type": "string"
+    },
+    "SmtpSettings__SenderPassword": {
+      "type": "string"
+    },
+    "SmtpSettings__SmtpHost": {
+      "type": "string"
+    },
+    "SmtpSettings__SmtpPort": {
+      "type": "string"
+    },
+    "SmtpSettings__SecureSocketOptions": {
+      "type": "string"
+    }
+  },
+  "variables": {},
+  "resources": [
+    // Function App
+    {
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('name')]",
+      "type": "Microsoft.Web/sites",
+      "kind": "functionapp,linux,container,azurecontainerapps",
+      "location": "[parameters('location')]",
+      "tags": {
+        "hidden-link: /app-insights-resource-id": "[resourceId(resourceGroup().name, 'Microsoft.Insights/components', 'webscrapper-function')]"
+      },
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Insights/components', 'webscrapper-function')]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[resourceId(resourceGroup().name, 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('name')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId(resourceGroup().name, 'Microsoft.Insights/components', 'webscrapper-function'), '2015-05-01').ConnectionString]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value, ';EndpointSuffix=', 'core.windows.net')]"
+            },
+            {
+              "name": "connectionStrings__MongoUrl",
+              "value": "[parameters('connectionStrings__MongoUrl')]"
+            },
+            {
+              "name": "SmtpSettings__SenderEmail",
+              "value": "[parameters('SmtpSettings__SenderEmail')]"
+            },
+            {
+              "name": "SmtpSettings__SenderPassword",
+              "value": "[parameters('SmtpSettings__SenderPassword')]"
+            },
+            {
+              "name": "SmtpSettings__SmtpHost",
+              "value": "[parameters('SmtpSettings__SmtpHost')]"
+            },
+            {
+              "name": "SmtpSettings__SmtpPort",
+              "value": "[parameters('SmtpSettings__SmtpPort')]"
+            },
+            {
+              "name": "SmtpSettings__SecureSocketOptions",
+              "value": "[parameters('SmtpSettings__SecureSocketOptions')]"
+            }
+          ],
+          "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
+          "ftpsState": "[parameters('ftpsState')]",
+          "linuxFxVersion": "[parameters('linuxFxVersion')]"
+        },
+        "clientAffinityEnabled": false,
+        "virtualNetworkSubnetId": null,
+        "functionsRuntimeAdminIsolationEnabled": false,
+        "managedEnvironmentId": "[resourceId(resourceGroup().name, 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "workloadProfileName": "[parameters('workloadProfileName')]",
+        "resourceConfig": "[parameters('resourceConfig')]"
+      }
+    },
+    // Application Insights Component
+    {
+      "apiVersion": "2020-02-02-preview",
+      "name": "webscrapper-function",
+      "type": "microsoft.insights/components",
+      "location": "[parameters('location')]",
+      "tags": null,
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      ],
+      "properties": {
+        "ApplicationId": "[parameters('name')]",
+        "Request_Source": "IbizaWebAppExtensionCreate",
+        "Flow_Type": "Redfield",
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      }
+    },
+    // Storage Account
+    {
+      "apiVersion": "2022-05-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "dependsOn": [],
+      "location": "[parameters('location')]",
+      "tags": null,
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "defaultToOAuthAuthentication": true
+      }
+    },
+    // Managed Environment
+    {
+      "apiVersion": "2024-02-02-preview",
+      "name": "[parameters('environmentName')]",
+      "type": "Microsoft.App/managedEnvironments",
+      "location": "[parameters('location')]",
+      "tags": null,
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      ],
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), '2020-08-01').customerId]",
+            "sharedKey": "[listKeys(resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), '2020-08-01').primarySharedKey]"
+          }
+        },
+        "workloadProfiles": [
+          {
+            "name": "Consumption",
+            "workloadProfileType": "Consumption"
+          }
+        ]
+      }
+    },
+    // Log Analytics Workspace
+    {
+      "apiVersion": "2020-08-01",
+      "name": "[parameters('workspaceName')]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "location": "[parameters('workspaceLocation')]",
+      "dependsOn": [],
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "workspaceCapping": {}
+      }
+    }
+  ]
+}
