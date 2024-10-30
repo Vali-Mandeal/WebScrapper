@@ -1,4 +1,4 @@
-#Webscrapper
+# Webscrapper
 
 WebScrapper is a personal project designed to track deals on local stores. Whenever a deal is found, it sends email notifications to keep me updated on the latest bargains.
 
