@@ -42,6 +42,12 @@ public class SmtpRepository : INotificationRepository
             var resiliencePipeline = _resiliencePipelineProvider.GetPipeline(SendEmailResiliencePipelineName);
             await resiliencePipeline.ExecuteAsync(async _ =>
             {
+                if (!smtpClient.IsConnected)
+                {
+                    await smtpClient.ConnectAsync();
+                    await smtpClient.AuthenticateAsync();
+                }
+
                 try
                 {
                     await smtpClient.SendAsync(message);
