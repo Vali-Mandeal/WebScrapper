@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using MimeKit;
 
-using Polly;
+using Polly.Registry;
 
 using WebScrapper.Entities;
 using WebScrapper.Factories.Interfaces;
@@ -12,15 +13,17 @@ namespace WebScrapper.Repositories;
 
 public class SmtpRepository : INotificationRepository
 {
-    private readonly ISmtpClientFactory _smtpClientFactory;
     private readonly SmtpSettings _smtpSettings;
+    private readonly ISmtpClientFactory _smtpClientFactory;
+    private readonly ResiliencePipelineProvider<string> _resiliencePipelineProvider;
     private readonly ILogger _logger;
 
-    public SmtpRepository(ISmtpClientFactory smtpClientFactory, SmtpSettings smtpSettings, ILogger logger)
+    public SmtpRepository(IOptions<SmtpSettings> smtpSettings, ISmtpClientFactory smtpClientFactory, ResiliencePipelineProvider<string> resiliencePipelineProvider, ILogger logger)
     {
-        this._smtpClientFactory = smtpClientFactory;
-        this._smtpSettings = smtpSettings;
-        this._logger = logger;
+        _smtpSettings = smtpSettings.Value;
+        _smtpClientFactory = smtpClientFactory;
+        _resiliencePipelineProvider = resiliencePipelineProvider;
+        _logger = logger;
     }
 
 
@@ -34,20 +37,9 @@ public class SmtpRepository : INotificationRepository
             SetEmailMetadata(notification, receiver, message);
             GetEmailBody(notification, message);
 
-            var retryPolicy = Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (exception, timeSpan, retryCount, context) =>
-                {
-                    _logger.LogWarning($"Retry {retryCount} for {receiver.Email} due to {exception.Message}");
-                });
-
-            await retryPolicy.ExecuteAsync(async () =>
+            var resiliencePipeline = _resiliencePipelineProvider.GetPipeline($"{nameof(SmtpRepository)}-pipeline");
+            await resiliencePipeline.ExecuteAsync(async _ =>
             {
-                if (!smtpClient.IsConnected)
-                {
-                    await ConnectAndAuthenticateSmtpClient();
-                }
-
                 try
                 {
                     await smtpClient.SendAsync(message);
@@ -55,14 +47,19 @@ public class SmtpRepository : INotificationRepository
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error sending notification to: {receiver.Email}, {ex.Message}");
+                    _logger.LogError(ex, $"Error sending notification to: {receiver.Email}, {ex.Message}");
                     throw;
                 }
             });
         }
     }
 
-    
+    private void SetEmailMetadata(Notification notification, NotificationReceiver receiver, MimeMessage message)
+    {
+        message.From.Add(new MailboxAddress(notification.Job, _smtpSettings.SenderEmail));
+        message.To.Add(new MailboxAddress(receiver.Name, receiver.Email));
+        message.Subject = notification.Subject;
+    }
 
     private static void GetEmailBody(Notification notification, MimeMessage message)
     {
@@ -71,12 +68,5 @@ public class SmtpRepository : INotificationRepository
             HtmlBody = notification.Body
         };
         message.Body = bodyBuilder.ToMessageBody();
-    }
-
-    private void SetEmailMetadata(Notification notification, NotificationReceiver receiver, MimeMessage message)
-    {
-        message.From.Add(new MailboxAddress(notification.Job, _smtpSettings.SenderEmail));
-        message.To.Add(new MailboxAddress(receiver.Name, receiver.Email));
-        message.Subject = notification.Subject;
     }
 }

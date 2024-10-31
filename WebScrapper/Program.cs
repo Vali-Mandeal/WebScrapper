@@ -5,6 +5,9 @@ using Microsoft.Extensions.Hosting;
 
 using MongoDB.Driver;
 
+using Polly;
+using Polly.Retry;
+
 using WebScrapper.Factories;
 using WebScrapper.Factories.Interfaces;
 using WebScrapper.Repositories;
@@ -39,6 +42,17 @@ var host = new HostBuilder()
         services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
 
         services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
+
+        services.AddResiliencePipeline($"{nameof(SmtpRepository)}-pipeline", x =>
+        {
+            x.AddRetry(new RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                MaxRetryAttempts = 3,
+                Delay = TimeSpan.FromSeconds(1),
+                BackoffType = DelayBackoffType.Exponential
+            });
+        });
 
         services.AddScoped<IAdsRepository, AdsRepository>();
         services.AddScoped<IScrapJobsRepository, ScrapJobsRepository>();
