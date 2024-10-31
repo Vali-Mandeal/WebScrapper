@@ -41,7 +41,9 @@ var host = new HostBuilder()
             return client.GetDatabase("WebCrawlerDb");
         });
 
-        services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+        services.AddOptions<SmtpSettings>()
+            .Bind(configuration.GetSection(SmtpSettings.SectionName))
+            .ValidateOnStart();
 
         services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
 

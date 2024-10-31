@@ -5,6 +5,7 @@ using MimeKit;
 
 using Polly.Registry;
 
+using WebScrapper.Adapters;
 using WebScrapper.Entities;
 using WebScrapper.Factories.Interfaces;
 using WebScrapper.Repositories.Interfaces;
@@ -44,8 +45,7 @@ public class SmtpRepository : INotificationRepository
             {
                 if (!smtpClient.IsConnected)
                 {
-                    await smtpClient.ConnectAsync();
-                    await smtpClient.AuthenticateAsync();
+                    await ReconnectAndAuthenticateAsync(smtpClient);
                 }
 
                 try
@@ -61,14 +61,25 @@ public class SmtpRepository : INotificationRepository
             });
         }
     }
-
+    private async Task ReconnectAndAuthenticateAsync(SmtpClientAdapter smtpClient)
+    {
+        try
+        {
+            await smtpClient.ConnectAsync();
+            await smtpClient.AuthenticateAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError($"Error connecting/authenticating SMTP client: {exception.Message}");
+            throw;
+        }
+    }
     private void SetEmailMetadata(Notification notification, NotificationReceiver receiver, MimeMessage message)
     {
         message.From.Add(new MailboxAddress(notification.Job, _smtpSettings.SenderEmail));
         message.To.Add(new MailboxAddress(receiver.Name, receiver.Email));
         message.Subject = notification.Subject;
     }
-
     private static void GetEmailBody(Notification notification, MimeMessage message)
     {
         var bodyBuilder = new BodyBuilder
