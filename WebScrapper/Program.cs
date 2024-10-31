@@ -15,6 +15,8 @@ using WebScrapper.Repositories.Interfaces;
 using WebScrapper.Services;
 using WebScrapper.Services.Interfaces;
 
+using static WebScrapper.Common.WebScrapperConstants;
+
 var host = new HostBuilder()
     .ConfigureAppConfiguration((context, config) =>
     {
@@ -43,7 +45,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
 
-        services.AddResiliencePipeline($"{nameof(SmtpRepository)}-pipeline", x =>
+        services.AddResiliencePipeline(SendEmailResiliencePipelineName, x =>
         {
             x.AddRetry(new RetryStrategyOptions
             {

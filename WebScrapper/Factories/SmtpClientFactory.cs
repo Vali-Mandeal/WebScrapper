@@ -18,6 +18,7 @@ public class SmtpClientFactory : ISmtpClientFactory
         _logger = logger;
     }
 
+
     public async Task<SmtpClient> CreateAsync()
     {
         var smtpClient = new SmtpClient();

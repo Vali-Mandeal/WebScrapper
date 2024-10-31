@@ -9,6 +9,8 @@ using WebScrapper.Entities;
 using WebScrapper.Factories.Interfaces;
 using WebScrapper.Repositories.Interfaces;
 
+using static WebScrapper.Common.WebScrapperConstants;
+
 namespace WebScrapper.Repositories;
 
 public class SmtpRepository : INotificationRepository
@@ -37,7 +39,7 @@ public class SmtpRepository : INotificationRepository
             SetEmailMetadata(notification, receiver, message);
             GetEmailBody(notification, message);
 
-            var resiliencePipeline = _resiliencePipelineProvider.GetPipeline($"{nameof(SmtpRepository)}-pipeline");
+            var resiliencePipeline = _resiliencePipelineProvider.GetPipeline(SendEmailResiliencePipelineName);
             await resiliencePipeline.ExecuteAsync(async _ =>
             {
                 try
