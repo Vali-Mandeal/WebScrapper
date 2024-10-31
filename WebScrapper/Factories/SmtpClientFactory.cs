@@ -3,6 +3,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+using WebScrapper.Adapters;
 using WebScrapper.Factories.Interfaces;
 
 namespace WebScrapper.Factories;
@@ -19,20 +20,20 @@ public class SmtpClientFactory : ISmtpClientFactory
     }
 
 
-    public async Task<SmtpClient> CreateAsync()
+    public async Task<SmtpClientAdapter> CreateAsync()
     {
-        var smtpClient = new SmtpClient();
+        var smtpClient = new SmtpClientAdapter(new SmtpClient(), _smtpSettings);
         await ConnectAsync(smtpClient);
         await AuthenticateAsync(smtpClient);
 
         return smtpClient;
     }
 
-    private async Task ConnectAsync(SmtpClient smtpClient)
+    private async Task ConnectAsync(SmtpClientAdapter smtpClient)
     {
         try
         {
-            await smtpClient.ConnectAsync(_smtpSettings.SmtpHost, _smtpSettings.SmtpPort, _smtpSettings.SecureSocketOptions);
+            await smtpClient.ConnectAsync();
         }
         catch (Exception exception)
         {
@@ -40,11 +41,11 @@ public class SmtpClientFactory : ISmtpClientFactory
             throw;
         }
     }
-    private async Task AuthenticateAsync(SmtpClient smtpClient)
+    private async Task AuthenticateAsync(SmtpClientAdapter smtpClient)
     {
         try
         {
-            await smtpClient.AuthenticateAsync(_smtpSettings.SenderEmail, _smtpSettings.SenderPassword);
+            await smtpClient.AuthenticateAsync();
         }
         catch (Exception exception)
         {
