@@ -2,7 +2,11 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using MongoDB.Driver;
+
+using WebScrapper.Factories;
+using WebScrapper.Factories.Interfaces;
 using WebScrapper.Repositories;
 using WebScrapper.Repositories.Interfaces;
 using WebScrapper.Services;
@@ -33,6 +37,8 @@ var host = new HostBuilder()
         });
 
         services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+
+        services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
 
         services.AddScoped<IAdsRepository, AdsRepository>();
         services.AddScoped<IScrapJobsRepository, ScrapJobsRepository>();

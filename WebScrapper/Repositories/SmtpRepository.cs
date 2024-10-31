@@ -1,28 +1,33 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+
 using MimeKit;
+
+using Polly;
+
 using WebScrapper.Entities;
+using WebScrapper.Factories.Interfaces;
 using WebScrapper.Repositories.Interfaces;
-using Polly; 
 
 namespace WebScrapper.Repositories;
 
-public class SmtpRepository : INotificationRepository, IDisposable
+public class SmtpRepository : INotificationRepository
 {
-    private readonly ILogger _logger;
-    private readonly MailKit.Net.Smtp.SmtpClient _smtpClient;
+    private readonly ISmtpClientFactory _smtpClientFactory;
     private readonly SmtpSettings _smtpSettings;
+    private readonly ILogger _logger;
 
-    public SmtpRepository(ILogger<SmtpRepository> logger, IOptions<SmtpSettings> smtpSettings)
+    public SmtpRepository(ISmtpClientFactory smtpClientFactory, SmtpSettings smtpSettings, ILogger logger)
     {
-        _logger = logger;
-        _smtpClient = new MailKit.Net.Smtp.SmtpClient();
-        _smtpSettings = smtpSettings.Value;
-        ConnectAndAuthenticateSmtpClient().GetAwaiter().GetResult();
+        this._smtpClientFactory = smtpClientFactory;
+        this._smtpSettings = smtpSettings;
+        this._logger = logger;
     }
+
 
     public async Task SendNotificationAsync(Notification notification)
     {
+        using var smtpClient = await _smtpClientFactory.CreateAsync();
+
         foreach (var receiver in notification.Receivers)
         {
             var message = new MimeMessage();
@@ -38,14 +43,14 @@ public class SmtpRepository : INotificationRepository, IDisposable
 
             await retryPolicy.ExecuteAsync(async () =>
             {
-                if (!_smtpClient.IsConnected)
+                if (!smtpClient.IsConnected)
                 {
                     await ConnectAndAuthenticateSmtpClient();
                 }
 
                 try
                 {
-                    await _smtpClient.SendAsync(message);
+                    await smtpClient.SendAsync(message);
                     _logger.LogInformation($"Notification sent successfully to: {receiver.Email}");
                 }
                 catch (Exception ex)
@@ -55,23 +60,9 @@ public class SmtpRepository : INotificationRepository, IDisposable
                 }
             });
         }
-
-        Dispose();
     }
 
-    private async Task ConnectAndAuthenticateSmtpClient()
-    {
-        try
-        {
-            await _smtpClient.ConnectAsync(_smtpSettings.SmtpHost, _smtpSettings.SmtpPort, _smtpSettings.SecureSocketOptions);
-            await _smtpClient.AuthenticateAsync(_smtpSettings.SenderEmail, _smtpSettings.SenderPassword);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error connecting/authenticating SMTP client: {ex.Message}");
-            throw;
-        }
-    }
+    
 
     private static void GetEmailBody(Notification notification, MimeMessage message)
     {
@@ -87,15 +78,5 @@ public class SmtpRepository : INotificationRepository, IDisposable
         message.From.Add(new MailboxAddress(notification.Job, _smtpSettings.SenderEmail));
         message.To.Add(new MailboxAddress(receiver.Name, receiver.Email));
         message.Subject = notification.Subject;
-    }
-
-    public void Dispose()
-    {
-        if (_smtpClient.IsConnected)
-        {
-            _smtpClient.Disconnect(true);
-        }
-        _smtpClient.Dispose();
-        GC.SuppressFinalize(this);
     }
 }
