@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "subscriptionId": {
@@ -75,6 +75,9 @@
         "[resourceId(resourceGroup().name, 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
         "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
       ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
         "name": "[parameters('name')]",
         "siteConfig": {
@@ -118,7 +121,10 @@
           ],
           "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
           "ftpsState": "[parameters('ftpsState')]",
-          "linuxFxVersion": "[parameters('linuxFxVersion')]"
+          "linuxFxVersion": "[parameters('linuxFxVersion')]",
+          "cors": {
+            "allowedOrigins": ["https://portal.azure.com"]
+          }
         },
         "clientAffinityEnabled": false,
         "virtualNetworkSubnetId": null,

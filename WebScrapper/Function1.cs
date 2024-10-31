@@ -23,7 +23,7 @@ public class Function1
     }
 
     [Function("Function1_HttpTrigger")]
-    public async Task<HttpResponseData> RunHttpTrigger([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req)
+    public async Task<HttpResponseData> RunHttpTrigger([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
     {
         await ExecuteScrapJobs();
         var response = req.CreateResponse(System.Net.HttpStatusCode.OK);
