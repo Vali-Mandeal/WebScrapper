@@ -1,76 +1,83 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 using MimeKit;
+
+using Polly.Registry;
+
+using WebScrapper.Adapters;
 using WebScrapper.Entities;
+using WebScrapper.Factories.Interfaces;
 using WebScrapper.Repositories.Interfaces;
-using Polly; 
+
+using static WebScrapper.Common.WebScrapperConstants;
 
 namespace WebScrapper.Repositories;
 
-public class SmtpRepository : INotificationRepository, IDisposable
+public class SmtpRepository : INotificationRepository
 {
-    private readonly ILogger _logger;
-    private readonly MailKit.Net.Smtp.SmtpClient _smtpClient;
     private readonly SmtpSettings _smtpSettings;
+    private readonly ISmtpClientFactory _smtpClientFactory;
+    private readonly ResiliencePipelineProvider<string> _resiliencePipelineProvider;
+    private readonly ILogger _logger;
 
-    public SmtpRepository(ILogger<SmtpRepository> logger, IOptions<SmtpSettings> smtpSettings)
+    public SmtpRepository(IOptions<SmtpSettings> smtpSettings, ISmtpClientFactory smtpClientFactory, ResiliencePipelineProvider<string> resiliencePipelineProvider, ILogger logger)
     {
-        _logger = logger;
-        _smtpClient = new MailKit.Net.Smtp.SmtpClient();
         _smtpSettings = smtpSettings.Value;
-        ConnectAndAuthenticateSmtpClient().GetAwaiter().GetResult();
+        _smtpClientFactory = smtpClientFactory;
+        _resiliencePipelineProvider = resiliencePipelineProvider;
+        _logger = logger;
     }
+
 
     public async Task SendNotificationAsync(Notification notification)
     {
+        using var smtpClient = await _smtpClientFactory.CreateAsync();
+
         foreach (var receiver in notification.Receivers)
         {
             var message = new MimeMessage();
             SetEmailMetadata(notification, receiver, message);
             GetEmailBody(notification, message);
 
-            var retryPolicy = Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (exception, timeSpan, retryCount, context) =>
-                {
-                    _logger.LogWarning($"Retry {retryCount} for {receiver.Email} due to {exception.Message}");
-                });
-
-            await retryPolicy.ExecuteAsync(async () =>
+            var resiliencePipeline = _resiliencePipelineProvider.GetPipeline(SendEmailResiliencePipelineName);
+            await resiliencePipeline.ExecuteAsync(async _ =>
             {
-                if (!_smtpClient.IsConnected)
+                if (!smtpClient.IsConnected)
                 {
-                    await ConnectAndAuthenticateSmtpClient();
+                    await ReconnectAndAuthenticateAsync(smtpClient);
                 }
 
                 try
                 {
-                    await _smtpClient.SendAsync(message);
+                    await smtpClient.SendAsync(message);
                     _logger.LogInformation($"Notification sent successfully to: {receiver.Email}");
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    _logger.LogError($"Error sending notification to: {receiver.Email}, {ex.Message}");
+                    _logger.LogError(exception, $"Error sending notification to: {receiver.Email}, {exception.Message}");
                 }
             });
         }
-
-        Dispose();
     }
-
-    private async Task ConnectAndAuthenticateSmtpClient()
+    private async Task ReconnectAndAuthenticateAsync(SmtpClientAdapter smtpClient)
     {
         try
         {
-            await _smtpClient.ConnectAsync(_smtpSettings.SmtpHost, _smtpSettings.SmtpPort, _smtpSettings.SecureSocketOptions);
-            await _smtpClient.AuthenticateAsync(_smtpSettings.SenderEmail, _smtpSettings.SenderPassword);
+            await smtpClient.ConnectAsync();
+            await smtpClient.AuthenticateAsync();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            _logger.LogError($"Error connecting/authenticating SMTP client: {ex.Message}");
+            _logger.LogError(exception, $"Error connecting/authenticating SMTP client: {exception.Message}");
         }
     }
-
+    private void SetEmailMetadata(Notification notification, NotificationReceiver receiver, MimeMessage message)
+    {
+        message.From.Add(new MailboxAddress(notification.Job, _smtpSettings.SenderEmail));
+        message.To.Add(new MailboxAddress(receiver.Name, receiver.Email));
+        message.Subject = notification.Subject;
+    }
     private static void GetEmailBody(Notification notification, MimeMessage message)
     {
         var bodyBuilder = new BodyBuilder
@@ -78,22 +85,5 @@ public class SmtpRepository : INotificationRepository, IDisposable
             HtmlBody = notification.Body
         };
         message.Body = bodyBuilder.ToMessageBody();
-    }
-
-    private void SetEmailMetadata(Notification notification, NotificationReceiver receiver, MimeMessage message)
-    {
-        message.From.Add(new MailboxAddress(notification.Job, _smtpSettings.SenderEmail));
-        message.To.Add(new MailboxAddress(receiver.Name, receiver.Email));
-        message.Subject = notification.Subject;
-    }
-
-    public void Dispose()
-    {
-        if (_smtpClient.IsConnected)
-        {
-            _smtpClient.Disconnect(true);
-        }
-        _smtpClient.Dispose();
-        GC.SuppressFinalize(this);
     }
 }
