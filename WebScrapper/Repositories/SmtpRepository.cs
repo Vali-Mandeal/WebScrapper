@@ -51,7 +51,6 @@ public class SmtpRepository : INotificationRepository, IDisposable
                 catch (Exception ex)
                 {
                     _logger.LogError($"Error sending notification to: {receiver.Email}, {ex.Message}");
-                    throw;
                 }
             });
         }
@@ -69,7 +68,6 @@ public class SmtpRepository : INotificationRepository, IDisposable
         catch (Exception ex)
         {
             _logger.LogError($"Error connecting/authenticating SMTP client: {ex.Message}");
-            throw;
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.Playwright;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
 
 using WebScrapper.Entities;
 using WebScrapper.Services.Interfaces;
@@ -6,7 +7,14 @@ using WebScrapper.Services.Interfaces;
 namespace WebScrapper.Services;
 public class ScrapService : IScrapService
 {
+    private ILogger _logger;
+
     private const bool _headless = true;
+
+    public ScrapService(ILogger<ScrapService> logger)
+    {
+        _logger = logger;
+    }
 
     public async Task<List<Ad>> GetCurrentAdsFromWebsiteAsync(ScrapJob scrapJob)
     {
@@ -47,7 +55,7 @@ public class ScrapService : IScrapService
         await page.GotoAsync(scrapJob.Url);
     }
 
-    private static async Task AcceptTermsAndConditionsAsync(IPage page)
+    private async Task AcceptTermsAndConditionsAsync(IPage page)
     {
         try
         {
@@ -57,7 +65,7 @@ public class ScrapService : IScrapService
         }
         catch (TimeoutException)
         {
-            await Console.Out.WriteLineAsync("Catch button did not appear, moving on.");
+            _logger.LogError("Catch button did not appear, moving on.");
         }
     }
 

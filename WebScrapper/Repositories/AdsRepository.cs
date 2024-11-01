@@ -1,15 +1,18 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using WebScrapper.Entities;
 using WebScrapper.Repositories.Interfaces;
 
 namespace WebScrapper.Repositories;
 public class AdsRepository : IAdsRepository
 {
+    private readonly ILogger _logger;
     private readonly IMongoDatabase _database;
     private readonly IMongoCollection<Ad> _collection;
 
-    public AdsRepository(IMongoDatabase database)
+    public AdsRepository(ILogger<AdsRepository> logger, IMongoDatabase database)
     {
+        _logger = logger;
         _database = database;
         _collection = _database.GetCollection<Ad>("Ads");
     }
@@ -24,8 +27,8 @@ public class AdsRepository : IAdsRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
-            return new List<Ad>();
+            _logger.LogError(ex.Message);
+            return [];
         }
     }
 
@@ -37,7 +40,7 @@ public class AdsRepository : IAdsRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
     }
 }
