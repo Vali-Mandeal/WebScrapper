@@ -2,60 +2,24 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "subscriptionId": {
-      "type": "string"
-    },
-    "name": {
-      "type": "string"
-    },
-    "location": {
-      "type": "string"
-    },
-    "use32BitWorkerProcess": {
-      "type": "bool"
-    },
-    "ftpsState": {
-      "type": "string"
-    },
-    "storageAccountName": {
-      "type": "string"
-    },
-    "linuxFxVersion": {
-      "type": "string"
-    },
-    "environmentName": {
-      "type": "string"
-    },
-    "workspaceName": {
-      "type": "string"
-    },
-    "workspaceLocation": {
-      "type": "string"
-    },
-    "workloadProfileName": {
-      "type": "string"
-    },
-    "resourceConfig": {
-      "type": "object"
-    },
-    "connectionStrings__MongoUrl": {
-      "type": "string"
-    },
-    "SmtpSettings__SenderEmail": {
-      "type": "string"
-    },
-    "SmtpSettings__SenderPassword": {
-      "type": "string"
-    },
-    "SmtpSettings__SmtpHost": {
-      "type": "string"
-    },
-    "SmtpSettings__SmtpPort": {
-      "type": "string"
-    },
-    "SmtpSettings__SecureSocketOptions": {
-      "type": "string"
-    }
+    "subscriptionId": { "type": "string" },
+    "name": { "type": "string" },
+    "location": { "type": "string" },
+    "use32BitWorkerProcess": { "type": "bool" },
+    "ftpsState": { "type": "string" },
+    "storageAccountName": { "type": "string" },
+    "linuxFxVersion": { "type": "string" },
+    "environmentName": { "type": "string" },
+    "workspaceName": { "type": "string" },
+    "workspaceLocation": { "type": "string" },
+    "workloadProfileName": { "type": "string" },
+    "resourceConfig": { "type": "object" },
+    "connectionStrings__MongoUrl": { "type": "string" },
+    "SmtpSettings__SenderEmail": { "type": "string" },
+    "SmtpSettings__SenderPassword": { "type": "string" },
+    "SmtpSettings__SmtpHost": { "type": "string" },
+    "SmtpSettings__SmtpPort": { "type": "string" },
+    "SmtpSettings__SecureSocketOptions": { "type": "string" }
   },
   "variables": {},
   "resources": [
@@ -157,8 +121,11 @@
       "apiVersion": "2022-05-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
-      "dependsOn": [],
       "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [],
       "tags": null,
       "sku": {
         "name": "Standard_LRS"
@@ -175,6 +142,9 @@
       "name": "[parameters('environmentName')]",
       "type": "Microsoft.App/managedEnvironments",
       "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "tags": null,
       "dependsOn": [
         "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"

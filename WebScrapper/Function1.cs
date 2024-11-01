@@ -74,10 +74,8 @@ public class Function1
 
     private async Task InitializePlaywrightAsync()
     {
-        var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+        var exitCode = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         if (exitCode != 0)
-        {
-            throw new Exception($"Playwright exited with code {exitCode}");
-        }
+            _logger.LogError($"Playwright exited with code {exitCode}");
     }
 }

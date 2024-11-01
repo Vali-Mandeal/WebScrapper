@@ -1,4 +1,5 @@
-﻿using WebScrapper.Entities;
+﻿using Microsoft.Extensions.Logging;
+using WebScrapper.Entities;
 using WebScrapper.Repositories.Interfaces;
 using WebScrapper.Services.Extensions;
 using WebScrapper.Services.Interfaces;
@@ -6,10 +7,12 @@ using WebScrapper.Services.Interfaces;
 namespace WebScrapper.Services;
 public class AdsService : IAdsService
 {
+    private readonly ILogger _logger;
     private readonly IAdsRepository _adsRepository;
 
-    public AdsService(IAdsRepository adsRepository)
+    public AdsService(ILogger<AdsService> logger, IAdsRepository adsRepository)
     {
+        _logger = logger;
         _adsRepository = adsRepository;
     }
 
@@ -17,7 +20,7 @@ public class AdsService : IAdsService
     {
         var existingsAds = await _adsRepository.GetByFilterAsync(propertyName: "ScrapJobId", filter: scrapJob.Id.ToString());
 
-        SetIdsForCurrentAds(scrappedAds, scrapJob);
+        SetScrappedJobsIds(scrappedAds, scrapJob);
 
         var newAds = GetNewAds(scrappedAds, existingsAds);
 
@@ -37,13 +40,13 @@ public class AdsService : IAdsService
         await _adsRepository.CreateAsync(ads);
     }
 
-    private static void SetIdsForCurrentAds(List<Ad> currentAds, ScrapJob scrapJob)
+    private void SetScrappedJobsIds(List<Ad> currentAds, ScrapJob scrapJob)
     {
         foreach (var ad in currentAds)
         {
             if (ad.Url == null)
             {
-                Console.WriteLine($"Ad url is null. Ad: Id={ad.Id}, Title={ad.Title}, Price={ad.Price}, Location={ad.LocationAndDate}, Scrajobid: {ad.ScrapJobId}");
+                _logger.LogError($"Ad url is null. Ad: Id={ad.Id}, Title={ad.Title}, Price={ad.Price}, Location={ad.LocationAndDate}, Scrajobid: {ad.ScrapJobId}");
                 continue;
             }
 
@@ -69,7 +72,7 @@ public class AdsService : IAdsService
     private static bool IsAdGenuine(Ad newAd, ScrapJob scrapJob)
     {
         return ContainsRequiredKeywords(newAd.Title, scrapJob.MustContainList)
-            && ContainsExcludedKeywords(newAd.Title, scrapJob.MustNotContainList);
+            && !ContainsExcludedKeywords(newAd.Title, scrapJob.MustNotContainList);
     }
 
     private static List<Ad> SetAdsMetadata(List<Ad> newAds, ScrapJob scrapJob)

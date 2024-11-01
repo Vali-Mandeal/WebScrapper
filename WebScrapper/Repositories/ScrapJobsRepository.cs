@@ -1,16 +1,19 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using WebScrapper.Entities;
 using WebScrapper.Repositories.Interfaces;
 
 namespace WebScrapper.Repositories;
 public class ScrapJobsRepository : IScrapJobsRepository
 {
+    private readonly ILogger _logger;
+
     private readonly IMongoDatabase _database;
     private readonly IMongoCollection<ScrapJob> _collection;
 
-    public ScrapJobsRepository(IMongoDatabase database)
+    public ScrapJobsRepository(ILogger<ScrapJobsRepository> logger, IMongoDatabase database)
     {
-
+        _logger = logger;
         _database = database;
         _collection = _database.GetCollection<ScrapJob>("ScrapJobs");
     }
@@ -25,8 +28,8 @@ public class ScrapJobsRepository : IScrapJobsRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
-            return new List<ScrapJob>();
+            _logger.LogError(ex.Message);
+            return [];
         }
     }
 
@@ -38,7 +41,7 @@ public class ScrapJobsRepository : IScrapJobsRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
     }
 }

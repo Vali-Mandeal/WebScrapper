@@ -53,10 +53,9 @@ public class SmtpRepository : INotificationRepository
                     await smtpClient.SendAsync(message);
                     _logger.LogInformation($"Notification sent successfully to: {receiver.Email}");
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    _logger.LogError(ex, $"Error sending notification to: {receiver.Email}, {ex.Message}");
-                    throw;
+                    _logger.LogError(exception, $"Error sending notification to: {receiver.Email}, {exception.Message}");
                 }
             });
         }
@@ -70,8 +69,7 @@ public class SmtpRepository : INotificationRepository
         }
         catch (Exception exception)
         {
-            _logger.LogError($"Error connecting/authenticating SMTP client: {exception.Message}");
-            throw;
+            _logger.LogError(exception, $"Error connecting/authenticating SMTP client: {exception.Message}");
         }
     }
     private void SetEmailMetadata(Notification notification, NotificationReceiver receiver, MimeMessage message)
