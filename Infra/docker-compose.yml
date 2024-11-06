@@ -3,12 +3,6 @@ services:
     build:
       context: ../WebScrapper
       dockerfile: ../WebScrapper/Dockerfile
-    environment:
-      - ConnectionStrings__MongoUrl=
-      - SmtpSettings__SenderEmail=
-      - SmtpSettings__SenderPassword=
-      - SmtpSettings__SmtpHost=
-      - SmtpSettings__SmtpPort=
-      - SmtpSettings__SecureSocketOptions=
+    image: webscrapper-dotnet-function-app:latest
     ports:
-      - "8080:80" # Map the port as needed for local testing
+      - "8080:80"

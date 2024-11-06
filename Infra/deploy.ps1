@@ -53,6 +53,7 @@ try {
     Check-AzureCLI
     DockerHub-Login
     Docker-BuildPush
+
     Deploy-ARMTemplate
     Write-Host "CI/CD Pipeline executed successfully."
 } catch {

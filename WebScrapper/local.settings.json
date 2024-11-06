@@ -1,17 +1,25 @@
 {
   "IsEncrypted": false,
+
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
   },
-  "ConnectionStrings": {
-    "MongoUrl": ""
+
+  "KeyVaultConfig": {
+    "Url": "https://webscrapper-function-kv.vault.azure.net/"
   },
+
+  "DbSettings": {
+    "MongoUrl": "<value-in-azure-key-vault>",
+    "DatabaseName": "<value-in-azure-key-vault>"
+  },
+
   "SmtpSettings": {
-    "SenderEmail": "",
-    "SenderPassword": "",
-    "SmtpHost": "",
-    "SmtpPort": "",
-    "SecureSocketOptions": ""
+    "SenderEmail": "<value-in-azure-key-vault>",
+    "SenderPassword": "<value-in-azure-key-vault>",
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": "587",
+    "SecureSocketOptions": "StartTls"
   }
 }

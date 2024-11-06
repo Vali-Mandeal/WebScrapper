@@ -3,6 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "subscriptionId": { "type": "string" },
+    "tenant": { "type": "string" },
     "name": { "type": "string" },
     "location": { "type": "string" },
     "use32BitWorkerProcess": { "type": "bool" },
@@ -14,12 +15,8 @@
     "workspaceLocation": { "type": "string" },
     "workloadProfileName": { "type": "string" },
     "resourceConfig": { "type": "object" },
-    "connectionStrings__MongoUrl": { "type": "string" },
-    "SmtpSettings__SenderEmail": { "type": "string" },
-    "SmtpSettings__SenderPassword": { "type": "string" },
-    "SmtpSettings__SmtpHost": { "type": "string" },
-    "SmtpSettings__SmtpPort": { "type": "string" },
-    "SmtpSettings__SecureSocketOptions": { "type": "string" }
+    "keyVaultName": { "type": "string" },
+    "KeyVaultConfig__Url": { "type": "string" }
   },
   "variables": {},
   "resources": [
@@ -38,6 +35,7 @@
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[resourceId(resourceGroup().name, 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
         "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+        //"[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
       ],
       "identity": {
         "type": "SystemAssigned"
@@ -59,28 +57,8 @@
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value, ';EndpointSuffix=', 'core.windows.net')]"
             },
             {
-              "name": "connectionStrings__MongoUrl",
-              "value": "[parameters('connectionStrings__MongoUrl')]"
-            },
-            {
-              "name": "SmtpSettings__SenderEmail",
-              "value": "[parameters('SmtpSettings__SenderEmail')]"
-            },
-            {
-              "name": "SmtpSettings__SenderPassword",
-              "value": "[parameters('SmtpSettings__SenderPassword')]"
-            },
-            {
-              "name": "SmtpSettings__SmtpHost",
-              "value": "[parameters('SmtpSettings__SmtpHost')]"
-            },
-            {
-              "name": "SmtpSettings__SmtpPort",
-              "value": "[parameters('SmtpSettings__SmtpPort')]"
-            },
-            {
-              "name": "SmtpSettings__SecureSocketOptions",
-              "value": "[parameters('SmtpSettings__SecureSocketOptions')]"
+              "name": "KeyVaultConfig__Url",
+              "value": "[parameters('KeyVaultConfig__Url')]"
             }
           ],
           "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
@@ -179,6 +157,74 @@
         "retentionInDays": 30,
         "workspaceCapping": {}
       }
+    },
+
+    // Key Vault
+    {
+      "apiVersion": "2023-08-01-preview",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "type": "Microsoft.KeyVault/vaults",
+      "properties": {
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enableRbacAuthorization": false,
+        "accessPolicies": [
+          {
+            "tenantId": "[parameters('tenant')]",
+            "objectId": "9431807c-c681-4320-9920-ca4120a31372",
+            "permissions": {
+              "secrets": ["get", "list", "set", "delete", "purge"],
+              "keys": [
+                "get",
+                "list",
+                "create",
+                "import",
+                "delete",
+                "update",
+                "backup",
+                "restore",
+                "recover",
+                "purge"
+              ],
+              "certificates": [
+                "get",
+                "list",
+                "create",
+                "import",
+                "update",
+                "delete",
+                "recover",
+                "purge"
+              ]
+            }
+          },
+          {
+            "tenantId": "[parameters('tenant')]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2022-03-01', 'Full').identity.principalId]",
+            "permissions": {
+              "secrets": ["get", "list"]
+            }
+          }
+        ],
+        "tenantId": "[parameters('tenant')]",
+        "sku": {
+          "name": "Standard",
+          "family": "A"
+        },
+        "publicNetworkAccess": "Enabled",
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 7,
+        "networkAcls": {
+          "defaultAction": "allow",
+          "bypass": "None",
+          "ipRules": [],
+          "virtualNetworkRules": []
+        }
+      },
+      "tags": {},
+      "dependsOn": ["[resourceId('Microsoft.Web/sites', parameters('name'))]"]
     }
   ]
 }
