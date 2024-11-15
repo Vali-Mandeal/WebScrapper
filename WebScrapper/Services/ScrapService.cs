@@ -124,7 +124,7 @@ public class ScrapService : IScrapService
         var locationDateElement = await card.QuerySelectorAsync("p[data-testid='location-date']");
         ad.LocationAndDate = locationDateElement != null ? await locationDateElement.InnerTextAsync() : null;
 
-        var adUrlElement = await card.QuerySelectorAsync("a.css-z3gu2d");
+        var adUrlElement = await card.QuerySelectorAsync("a.css-qo0cxu");
         var partialUrl = adUrlElement != null ? await adUrlElement.GetAttributeAsync("href") : null;
         ad.Url = partialUrl != null ? scrapJob.Url + partialUrl : null;
 

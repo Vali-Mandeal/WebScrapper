@@ -3,7 +3,8 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using WebScrapper.Entities;
 using WebScrapper.Repositories.Interfaces;
-using Polly; 
+using Polly;
+using WebScrapper.Configuration;
 
 namespace WebScrapper.Repositories;
 
