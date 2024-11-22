@@ -12,14 +12,16 @@ public class Function1
     private readonly IScrapService _scrapService;
     private readonly IAdsService _adsService;
     private readonly INotificationService _notificationService;
+    private readonly IWebsiteMetadataService _websiteMetadataService;
 
-    public Function1(ILogger<Function1> logger, IScrapJobsService scrapJobsService, IScrapService scrapService, IAdsService adsService, INotificationService notificationService)
+    public Function1(ILogger<Function1> logger, IScrapJobsService scrapJobsService, IScrapService scrapService, IAdsService adsService, INotificationService notificationService, IWebsiteMetadataService websiteMetadataService)
     {
         _logger = logger;
         _scrapJobsService = scrapJobsService;
         _scrapService = scrapService;
         _adsService = adsService;
         _notificationService = notificationService;
+        _websiteMetadataService = websiteMetadataService;
     }
 
     [Function("Function1_HttpTrigger")]
@@ -52,13 +54,14 @@ public class Function1
 
         //await InitializePlaywrightAsync();
 
-        var scrapJobs = await _scrapJobsService.GetScrapJobsAsync();
+        var scrapJobs = await _scrapJobsService.GetAsync();
 
         foreach (var scrapJob in scrapJobs)
         {
             _logger.LogInformation($"Job {scrapJob.Name} started at: {DateTime.UtcNow}");
 
-            var currentAds = await _scrapService.GetCurrentAdsFromWebsiteAsync(scrapJob);
+            var websiteMetadata = await _websiteMetadataService.GetAsync(scrapJob.WebsiteMetadataId);
+            var currentAds = await _scrapService.GetCurrentAdsFromWebsiteAsync(scrapJob, websiteMetadata);
             var newAds = await _adsService.GetNewAsync(currentAds, scrapJob);
             await _adsService.AddAsync(newAds);
 

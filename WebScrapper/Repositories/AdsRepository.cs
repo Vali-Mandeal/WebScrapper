@@ -17,7 +17,7 @@ public class AdsRepository : IAdsRepository
         _collection = _database.GetCollection<Ad>("Ads");
     }
 
-    public async Task<List<Ad>> GetByFilterAsync(string propertyName, string? filter = null)
+    public async Task<List<Ad>> GetAsync(string propertyName, string? filter = null)
     {
         try
         {
@@ -32,7 +32,7 @@ public class AdsRepository : IAdsRepository
         }
     }
 
-    public async Task CreateAsync(List<Ad> ads)
+    public async Task AddAsync(List<Ad> ads)
     {
         try
         {

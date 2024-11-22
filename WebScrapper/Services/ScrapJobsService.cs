@@ -12,12 +12,12 @@ public class ScrapJobsService : IScrapJobsService
         _scrapJobsRepository = scrapJobsRepository;
     }
 
-    public async Task<List<ScrapJob>> GetScrapJobsAsync()
+    public async Task<List<ScrapJob>> GetAsync()
     {
-        return await _scrapJobsRepository.GetAllScrapJobsAsync();
+        return await _scrapJobsRepository.GetAsync();
     }
 
-    public async Task AddScrapJobAsync(ScrapJob scrapJob)
+    public async Task AddAsync(ScrapJob scrapJob)
     {
         await _scrapJobsRepository.AddAsync(scrapJob);
     }

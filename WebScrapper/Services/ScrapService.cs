@@ -16,18 +16,18 @@ public class ScrapService : IScrapService
         _logger = logger;
     }
 
-    public async Task<List<Ad>> GetCurrentAdsFromWebsiteAsync(ScrapJob scrapJob)
+    public async Task<List<Ad>> GetCurrentAdsFromWebsiteAsync(ScrapJob scrapJob, WebsiteMetadata websiteMetadata)
     {
         IBrowser browser = await GetBrowserAsync();
         IPage page = await GetPageAsync(browser);
 
-        await LoadPageAsync(page, scrapJob);
-        await AcceptTermsAndConditionsAsync(page);
-        await SearchAsync(page, scrapJob.SearchValue);
-        await ScrollPageToBottomAsync(page);
+        await LoadPageAsync(page, scrapJob, websiteMetadata);
+        await AcceptTermsAndConditionsAsync(page, websiteMetadata);
+        await SearchAsync(page, scrapJob.SearchValue, websiteMetadata);
+        await ScrollPageToBottomAsync(page, websiteMetadata);
 
-        var cards = await GetCardAdsAsync(page);
-        var ads = await ExtractAdsFromCardsAsync(scrapJob, cards);
+        var cards = await GetCardAdsAsync(page, websiteMetadata);
+        var ads = await ExtractAdsFromCardsAsync(scrapJob, cards, websiteMetadata);
 
         await browser.CloseAsync();
 
@@ -50,16 +50,19 @@ public class ScrapService : IScrapService
         return page;
     }
 
-    private static async Task LoadPageAsync(IPage page, ScrapJob scrapJob)
+    private static async Task LoadPageAsync(IPage page, ScrapJob scrapJob, WebsiteMetadata websiteMetadata)
     {
-        await page.GotoAsync(scrapJob.Url);
+        await page.GotoAsync(websiteMetadata.Url);
     }
 
-    private async Task AcceptTermsAndConditionsAsync(IPage page)
+    private async Task AcceptTermsAndConditionsAsync(IPage page, WebsiteMetadata websiteMetadata)
     {
+        if (websiteMetadata.ShouldAcceptTermsAndConditions is false)
+            return;
+
         try
         {
-            var acceptButton = page.Locator("button[id=onetrust-accept-btn-handler]");
+            var acceptButton = page.Locator(websiteMetadata.Selectors.TermsAndConditionsButtonSelector);
             await acceptButton.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
             await acceptButton.ClickAsync();
         }
@@ -69,41 +72,52 @@ public class ScrapService : IScrapService
         }
     }
 
-    private static async Task ScrollPageToBottomAsync(IPage page)
+    private static async Task SearchAsync(IPage page, string searchValue, WebsiteMetadata websiteMetadata)
     {
-        for (int i = 0; i < 50; i++)
-        {
-            await page.EvaluateAsync("window.scrollBy(0, 200)");
-            await Task.Delay(500);
-        }
-    }
+        if (websiteMetadata.ShouldSearch is false)
+            return;
 
-    private static async Task<IReadOnlyList<IElementHandle>> GetCardAdsAsync(IPage page)
-    {
-        await Task.Delay(3000);
-
-        await page.WaitForSelectorAsync("div[data-testid='l-card']");
-
-        var cards = await page.QuerySelectorAllAsync("div[data-testid='l-card']");
-        return cards;
-    }
-
-    private static async Task SearchAsync(IPage page, string searchValue)
-    {
-        var searchBox = page.Locator("input[placeholder='Ce anume cauți?']");
+        var searchBox = page.Locator(websiteMetadata.Selectors.SearchSelector);
         await searchBox.WaitForAsync();
         await searchBox.FillAsync(searchValue);
 
         await searchBox.PressAsync("Enter");
     }
 
-    private static async Task<List<Ad>> ExtractAdsFromCardsAsync(ScrapJob scrapJob, IReadOnlyList<IElementHandle> cards)
+    private static async Task ScrollPageToBottomAsync(IPage page, WebsiteMetadata websiteMetadata)
+    {
+        if (websiteMetadata.ShouldScrollToBottom is false)
+            return;
+
+        for (int i = 0; i < 50; i++)
+        {
+            await page.EvaluateAsync(websiteMetadata.Selectors.ScrollToButtonCommand);
+            await Task.Delay(500);
+        }
+    }
+
+    private static async Task<IReadOnlyList<IElementHandle>> GetCardAdsAsync(IPage page, WebsiteMetadata websiteMetadata)
+    {
+        var cardSelector = websiteMetadata.Selectors.CardsSelector;
+
+        await Task.Delay(3000);
+
+        await page.WaitForSelectorAsync(cardSelector);
+
+        var cards = await page.QuerySelectorAllAsync(cardSelector);
+
+        return cards;
+    }
+
+  
+
+    private static async Task<List<Ad>> ExtractAdsFromCardsAsync(ScrapJob scrapJob, IReadOnlyList<IElementHandle> cards, WebsiteMetadata websiteMetadata)
     {
         var ads = new List<Ad>();
 
         foreach (var card in cards)
         {
-            Ad ad = await GetAdAsync(card, scrapJob);
+            Ad ad = await GetAdAsync(card, scrapJob, websiteMetadata);
 
             ads.Add(ad);
         }
@@ -111,31 +125,46 @@ public class ScrapService : IScrapService
         return ads;
     }
 
-    private static async Task<Ad> GetAdAsync(IElementHandle card, ScrapJob scrapJob)
+    private static async Task<Ad> GetAdAsync(IElementHandle card, ScrapJob scrapJob, WebsiteMetadata websiteMetadata)
     {
+        var selectors = websiteMetadata.Selectors;
+
         var ad = new Ad();
 
-        var titleElement = await card.QuerySelectorAsync("h6");
-        ad.Title = titleElement != null ? await titleElement.InnerTextAsync() : null;
+        var titleElement = await card.QuerySelectorAsync(selectors.CardTitleSelector);
+        ad.Title = titleElement is not null 
+            ? await titleElement.InnerTextAsync() 
+            : null;
 
-        var priceElement = await card.QuerySelectorAsync("p[data-testid='ad-price']");
-        ad.Price = priceElement != null ? await priceElement.InnerTextAsync() : null;
+        var priceElement = await card.QuerySelectorAsync(selectors.CardPriceSelector);
+        ad.Price = priceElement is not null 
+            ? await priceElement.InnerTextAsync() 
+            : null;
 
-        var locationDateElement = await card.QuerySelectorAsync("p[data-testid='location-date']");
-        ad.LocationAndDate = locationDateElement != null ? await locationDateElement.InnerTextAsync() : null;
+        var locationDateElement = await card.QuerySelectorAsync(selectors.LocationAndDateSelector);
+        ad.LocationAndDate = locationDateElement is not null 
+            ? await locationDateElement.InnerTextAsync() 
+            : null;
 
-        var adUrlElement = await card.QuerySelectorAsync("a.css-qo0cxu");
-        var partialUrl = adUrlElement != null ? await adUrlElement.GetAttributeAsync("href") : null;
-        ad.Url = partialUrl != null ? scrapJob.Url + partialUrl : null;
+        var adUrlElement = await card.QuerySelectorAsync(selectors.AdUrlWrapperSelector);
+        var partialUrl = adUrlElement is not null ? await adUrlElement.GetAttributeAsync(selectors.AdUrlSelector) : null;
+        ad.Url = partialUrl is not null 
+            ? websiteMetadata.Url + partialUrl 
+            : null;
 
-        var thumbnailElement = await card.QuerySelectorAsync("img[src]");
-        ad.ThumbnailUrl = thumbnailElement != null ? await thumbnailElement.GetAttributeAsync("src") : null;
+        var thumbnailElement = await card.QuerySelectorAsync(selectors.ThumbnailUrlWrapperSelector);
+        ad.ThumbnailUrl = thumbnailElement is not null 
+            ? await thumbnailElement.GetAttributeAsync(selectors.ThumbnailUrlSelector) 
+            : null;
 
         // Url fallback
-        if (ad.ThumbnailUrl == null)
+        if (ad.ThumbnailUrl is null)
         {
-            thumbnailElement = await card.QuerySelectorAsync("img[data-src]");
-            ad.ThumbnailUrl = thumbnailElement != null ? await thumbnailElement.GetAttributeAsync("data-src") : null;
+            thumbnailElement = await card.QuerySelectorAsync(selectors.BackupThumbnailUrlWrapperSelector);
+
+            ad.ThumbnailUrl = thumbnailElement is not null 
+                ? await thumbnailElement.GetAttributeAsync(selectors.BackupThumbnailUrlSelector) 
+                : null;
         }
 
         return ad;

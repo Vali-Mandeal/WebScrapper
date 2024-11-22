@@ -2,8 +2,8 @@
 public class ScrapJob
 {
     public int Id { get; set; }
+    public int WebsiteMetadataId { get; set; }
     public string Name { get; set; } = "";
-    public string Url { get; set; } = "";
     public string SearchValue { get; set; } = "";
     public List<string> MustContainList { get; set; } = [];
     public List<string> MustNotContainList { get; set; } = [];

@@ -3,6 +3,6 @@
 namespace WebScrapper.Services.Interfaces;
 public interface IScrapJobsService
 {
-    Task<List<ScrapJob>> GetScrapJobsAsync();
-    Task AddScrapJobAsync(ScrapJob scrapJob);
+    Task<List<ScrapJob>> GetAsync();
+    Task AddAsync(ScrapJob scrapJob);
 }

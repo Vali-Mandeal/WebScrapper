@@ -10,7 +10,7 @@ public interface IAdsRepository
     /// <param name="propertyName"></param>
     /// <param name="filter"></param>
     /// <returns></returns>
-    Task<List<Ad>> GetByFilterAsync(string propertyName, string? filter = null);
+    Task<List<Ad>> GetAsync(string propertyName, string? filter = null);
 
-    Task CreateAsync(List<Ad> ads);
+    Task AddAsync(List<Ad> ads);
 }

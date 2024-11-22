@@ -3,5 +3,5 @@
 namespace WebScrapper.Services.Interfaces;
 public interface IScrapService
 {
-    Task<List<Ad>> GetCurrentAdsFromWebsiteAsync(ScrapJob scrapJob);
+    Task<List<Ad>> GetCurrentAdsFromWebsiteAsync(ScrapJob scrapJob, WebsiteMetadata websiteMetadata);
 }

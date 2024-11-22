@@ -18,7 +18,7 @@ public class ScrapJobsRepository : IScrapJobsRepository
         _collection = _database.GetCollection<ScrapJob>("ScrapJobs");
     }
 
-    public async Task<List<ScrapJob>> GetAllScrapJobsAsync()
+    public async Task<List<ScrapJob>> GetAsync()
     {
         try
         {

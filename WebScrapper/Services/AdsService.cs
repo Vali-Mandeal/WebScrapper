@@ -18,7 +18,7 @@ public class AdsService : IAdsService
 
     public async Task<List<Ad>> GetNewAsync(List<Ad> scrappedAds, ScrapJob scrapJob)
     {
-        var existingsAds = await _adsRepository.GetByFilterAsync(propertyName: "ScrapJobId", filter: scrapJob.Id.ToString());
+        var existingsAds = await _adsRepository.GetAsync(propertyName: "ScrapJobId", filter: scrapJob.Id.ToString());
 
         SetScrappedJobsIds(scrappedAds, scrapJob);
 
@@ -37,7 +37,7 @@ public class AdsService : IAdsService
 
     public async Task AddAsync(List<Ad> ads)
     {
-        await _adsRepository.CreateAsync(ads);
+        await _adsRepository.AddAsync(ads);
     }
 
     private void SetScrappedJobsIds(List<Ad> currentAds, ScrapJob scrapJob)

@@ -1,6 +1,5 @@
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,11 +48,13 @@ var host = new HostBuilder()
         services.AddScoped<IAdsRepository, AdsRepository>();
         services.AddScoped<IScrapJobsRepository, ScrapJobsRepository>();
         services.AddScoped<INotificationRepository, SmtpRepository>();
+        services.AddScoped<IWebsiteMetadataRepository, WebsiteMetadataRepository>();
 
         services.AddScoped<IAdsService, AdsService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IScrapJobsService, ScrapJobsService>();
         services.AddScoped<IScrapService, ScrapService>();
+        services.AddScoped<IWebsiteMetadataService, WebsiteMetadataService>();
 
     })
     .Build();
