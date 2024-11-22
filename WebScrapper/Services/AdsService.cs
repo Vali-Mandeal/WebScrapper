@@ -18,6 +18,8 @@ public class AdsService : IAdsService
 
     public async Task<List<Ad>> GetNewAsync(List<Ad> scrappedAds, ScrapJob scrapJob)
     {
+        _logger.LogInformation($"Processing new ads.");
+
         var existingsAds = await _adsRepository.GetAsync(propertyName: "ScrapJobId", filter: scrapJob.Id.ToString());
 
         SetScrappedJobsIds(scrappedAds, scrapJob);
@@ -37,6 +39,8 @@ public class AdsService : IAdsService
 
     public async Task AddAsync(List<Ad> ads)
     {
+        _logger.LogInformation($"Saving new ads. Count: {ads.Count}");
+
         await _adsRepository.AddAsync(ads);
     }
 

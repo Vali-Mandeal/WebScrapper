@@ -55,8 +55,6 @@ public class SmtpRepository : INotificationRepository, IDisposable
                 }
             });
         }
-
-        Dispose();
     }
 
     private async Task ConnectAndAuthenticateSmtpClient()

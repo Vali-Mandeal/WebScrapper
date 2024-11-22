@@ -34,15 +34,16 @@ public class ScrapService : IScrapService
         return ads;
     }
 
-    private static async Task<IBrowser> GetBrowserAsync()
+    private async Task<IBrowser> GetBrowserAsync()
     {
+        _logger.LogInformation("Launching browser");
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = _headless });
 
         return browser;
     }
 
-    private static async Task<IPage> GetPageAsync(IBrowser browser)
+    private async static Task<IPage> GetPageAsync(IBrowser browser)
     {
         var context = await browser.NewContextAsync();
         var page = await context.NewPageAsync();
@@ -50,8 +51,9 @@ public class ScrapService : IScrapService
         return page;
     }
 
-    private static async Task LoadPageAsync(IPage page, ScrapJob scrapJob, WebsiteMetadata websiteMetadata)
+    private async Task LoadPageAsync(IPage page, ScrapJob scrapJob, WebsiteMetadata websiteMetadata)
     {
+        _logger.LogInformation($"Loading page: {websiteMetadata.Url}");
         await page.GotoAsync(websiteMetadata.Url);
     }
 
@@ -65,18 +67,21 @@ public class ScrapService : IScrapService
             var acceptButton = page.Locator(websiteMetadata.Selectors.TermsAndConditionsButtonSelector);
             await acceptButton.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
             await acceptButton.ClickAsync();
+
+            _logger.LogInformation("Accepted ToC.");
         }
         catch (TimeoutException)
         {
-            _logger.LogError("Catch button did not appear, moving on.");
+            _logger.LogWarning("ToC button did not appear, moving on.");
         }
     }
 
-    private static async Task SearchAsync(IPage page, string searchValue, WebsiteMetadata websiteMetadata)
+    private async Task SearchAsync(IPage page, string searchValue, WebsiteMetadata websiteMetadata)
     {
         if (websiteMetadata.ShouldSearch is false)
             return;
 
+        _logger.LogInformation($"Using search value: {searchValue}");
         var searchBox = page.Locator(websiteMetadata.Selectors.SearchSelector);
         await searchBox.WaitForAsync();
         await searchBox.FillAsync(searchValue);
@@ -84,20 +89,25 @@ public class ScrapService : IScrapService
         await searchBox.PressAsync("Enter");
     }
 
-    private static async Task ScrollPageToBottomAsync(IPage page, WebsiteMetadata websiteMetadata)
+    private async Task ScrollPageToBottomAsync(IPage page, WebsiteMetadata websiteMetadata)
     {
         if (websiteMetadata.ShouldScrollToBottom is false)
             return;
+
+        _logger.logInformation("Scrolling to bottom of page started.");
 
         for (int i = 0; i < 50; i++)
         {
             await page.EvaluateAsync(websiteMetadata.Selectors.ScrollToButtonCommand);
             await Task.Delay(500);
         }
+
+        _logger.logInformation("Scrolling to bottom of page done.");
     }
 
-    private static async Task<IReadOnlyList<IElementHandle>> GetCardAdsAsync(IPage page, WebsiteMetadata websiteMetadata)
+    private async Task<IReadOnlyList<IElementHandle>> GetCardAdsAsync(IPage page, WebsiteMetadata websiteMetadata)
     {
+        _logger.LogInformation("Reading card ads.");
         var cardSelector = websiteMetadata.Selectors.CardsSelector;
 
         await Task.Delay(3000);
@@ -109,10 +119,9 @@ public class ScrapService : IScrapService
         return cards;
     }
 
-  
-
-    private static async Task<List<Ad>> ExtractAdsFromCardsAsync(ScrapJob scrapJob, IReadOnlyList<IElementHandle> cards, WebsiteMetadata websiteMetadata)
+    private async Task<List<Ad>> ExtractAdsFromCardsAsync(ScrapJob scrapJob, IReadOnlyList<IElementHandle> cards, WebsiteMetadata websiteMetadata)
     {
+        _logger.LogInformation("Extracting card ads.");
         var ads = new List<Ad>();
 
         foreach (var card in cards)
