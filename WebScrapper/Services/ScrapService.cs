@@ -94,7 +94,7 @@ public class ScrapService : IScrapService
         if (websiteMetadata.ShouldScrollToBottom is false)
             return;
 
-        _logger.logInformation("Scrolling to bottom of page started.");
+        _logger.LogInformation("Scrolling to bottom of page started.");
 
         for (int i = 0; i < 50; i++)
         {
@@ -102,7 +102,7 @@ public class ScrapService : IScrapService
             await Task.Delay(500);
         }
 
-        _logger.logInformation("Scrolling to bottom of page done.");
+        _logger.LogInformation("Scrolling to bottom of page done.");
     }
 
     private async Task<IReadOnlyList<IElementHandle>> GetCardAdsAsync(IPage page, WebsiteMetadata websiteMetadata)
