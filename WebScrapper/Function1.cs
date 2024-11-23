@@ -63,6 +63,13 @@ public class Function1
             var websiteMetadata = await _websiteMetadataService.GetAsync(scrapJob.WebsiteMetadataId);
             var currentAds = await _scrapService.GetCurrentAdsFromWebsiteAsync(scrapJob, websiteMetadata);
             var newAds = await _adsService.GetNewAsync(currentAds, scrapJob);
+
+            if (!newAds.Any())
+            {
+                _logger.LogInformation($"No new ads found for job {scrapJob.Name}");
+                continue;
+            }
+
             await _adsService.AddAsync(newAds);
 
             var notificationWorthyAds = newAds
