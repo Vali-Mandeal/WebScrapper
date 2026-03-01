@@ -16,20 +16,21 @@ resource "azurerm_key_vault" "main" {
     secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
     key_permissions    = ["Get", "List", "Create", "Import", "Delete", "Update", "Backup", "Restore", "Recover", "Purge"]
   }
+}
 
-  # Master function - read-only secrets access
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azapi_resource.function_master.output.identity.principalId
+# Separate access policies to break the cycle (functions -> KV -> functions)
+resource "azurerm_key_vault_access_policy" "master" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azapi_resource.function_master.output.identity.principalId
 
-    secret_permissions = ["Get", "List"]
-  }
+  secret_permissions = ["Get", "List"]
+}
 
-  # Slave function - read-only secrets access
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azapi_resource.function_slave.output.identity.principalId
+resource "azurerm_key_vault_access_policy" "slave" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azapi_resource.function_slave.output.identity.principalId
 
-    secret_permissions = ["Get", "List"]
-  }
+  secret_permissions = ["Get", "List"]
 }
