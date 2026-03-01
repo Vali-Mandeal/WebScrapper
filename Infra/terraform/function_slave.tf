@@ -39,8 +39,7 @@ resource "azapi_resource" "function_slave" {
           }
         ]
       }
-      clientAffinityEnabled              = false
-      functionsRuntimeAdminIsolationEnabled = false
+      clientAffinityEnabled = false
     }
   }
 
