@@ -22,7 +22,7 @@ COPY WebScrapper.Slave/ WebScrapper.Slave/
 RUN dotnet build WebScrapper.Slave/WebScrapper.Slave.csproj -c Release -o /src/build
 
 # Install Playwright browsers and dependencies
-RUN playwright install --with-deps
+RUN playwright install --with-deps -p WebScrapper.Slave/WebScrapper.Slave.csproj
 
 # Publish the .NET function app
 RUN dotnet publish WebScrapper.Slave/WebScrapper.Slave.csproj -c Release -o /home/site/wwwroot
