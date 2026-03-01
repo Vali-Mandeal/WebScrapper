@@ -9,6 +9,6 @@ resource "azurerm_storage_account" "functions" {
 }
 
 resource "azurerm_storage_queue" "scrap_jobs" {
-  name                 = "scrap-jobs-queue"
-  storage_account_name = azurerm_storage_account.functions.name
+  name               = "scrap-jobs-queue"
+  storage_account_id = azurerm_storage_account.functions.id
 }

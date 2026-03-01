@@ -15,8 +15,8 @@ resource "azapi_resource" "function_master" {
       managedEnvironmentId = azurerm_container_app_environment.main.id
       workloadProfileName  = "Consumption"
       resourceConfig = {
-        cpu    = 0.25
-        memory = "0.5Gi"
+        cpu    = 0.5
+        memory = "1Gi"
       }
       siteConfig = {
         linuxFxVersion = "DOCKER|${var.master_image}"
