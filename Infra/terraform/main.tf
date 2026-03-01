@@ -15,11 +15,13 @@ terraform {
     storage_account_name = "stwebscrappertfstate"
     container_name       = "tfstate"
     key                  = "webscrapper.tfstate"
+    use_oidc             = true
   }
 }
 
 provider "azurerm" {
   features {}
+  use_oidc = true
 }
 
 provider "azapi" {}
