@@ -1,10 +1,6 @@
 # Stage 1: Build the .NET function app and install Playwright
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 
-# Install PowerShell (required by Playwright install script)
-RUN dotnet tool install --global PowerShell
-ENV PATH="$PATH:/root/.dotnet/tools"
-
 WORKDIR /src
 
 # Copy project files and restore
@@ -19,9 +15,11 @@ COPY WebScrapper.Slave/ WebScrapper.Slave/
 # Build the project
 RUN dotnet build WebScrapper.Slave/WebScrapper.Slave.csproj -c Release
 
-# Install Playwright browsers and system dependencies
+# Install Playwright Chromium browser and system dependencies
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN pwsh WebScrapper.Slave/bin/Release/net8.0/playwright.ps1 install --with-deps chromium
+RUN /root/.nuget/packages/microsoft.playwright/1.51.0/.playwright/node/linux-x64/node \
+    /root/.nuget/packages/microsoft.playwright/1.51.0/.playwright/package/cli.js \
+    install --with-deps chromium
 
 # Publish the .NET function app
 RUN dotnet publish WebScrapper.Slave/WebScrapper.Slave.csproj -c Release -o /home/site/wwwroot
