@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
+  },
+
+  "KeyVaultConfig": {
+    "Url": "https://webscrapper-function-kv.vault.azure.net/"
+  },
+
+  "DbSettings": {
+    "MongoUrl": "<value-in-azure-key-vault>",
+    "DatabaseName": "<value-in-azure-key-vault>"
+  }
+}

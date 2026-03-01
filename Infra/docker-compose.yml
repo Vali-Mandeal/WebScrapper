@@ -1,8 +1,20 @@
 services:
-  dotnet-function-app:
+  master:
     build:
-      context: ../WebScrapper
-      dockerfile: ../WebScrapper/Dockerfile
-    image: webscrapper-dotnet-function-app:latest
+      context: ../src
+      dockerfile: WebScrapper.Master/Dockerfile
+    image: webscrapper-master:latest
     ports:
       - "8080:80"
+    environment:
+      - AzureWebJobsStorage=UseDevelopmentStorage=true
+
+  slave:
+    build:
+      context: ../src
+      dockerfile: WebScrapper.Slave/Dockerfile
+    image: webscrapper-slave:latest
+    ports:
+      - "8081:80"
+    environment:
+      - AzureWebJobsStorage=UseDevelopmentStorage=true

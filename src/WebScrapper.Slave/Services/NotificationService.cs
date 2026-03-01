@@ -1,0 +1,69 @@
+using Microsoft.Extensions.Logging;
+using System.Text;
+using WebScrapper.Shared.Entities;
+using WebScrapper.Slave.Repositories.Interfaces;
+using WebScrapper.Slave.Services.Interfaces;
+
+namespace WebScrapper.Slave.Services;
+
+public class NotificationService : INotificationService
+{
+    private readonly ILogger _logger;
+    private readonly INotificationRepository _notificationRepository;
+
+    public NotificationService(ILogger<NotificationService> logger, INotificationRepository notificationRepository)
+    {
+        _logger = logger;
+        _notificationRepository = notificationRepository;
+    }
+
+    public async Task SendNotificationAsync(List<Ad> ads, ScrapJob scrapJob)
+    {
+        if (ads.Any() == false)
+        {
+            _logger.LogInformation($"No new ads for {scrapJob.Name}");
+            return;
+        }
+
+        _logger.LogInformation($"Generating notification for job: {scrapJob.Name}, found {ads.Count} ads.");
+
+
+        var htmlBody = GetHtmlBody(ads);
+
+        var notification = new Notification(
+             Receivers: scrapJob.NotificationReceivers,
+             Subject: $"New ads for {scrapJob.Name} {DateTime.UtcNow}",
+             Body: htmlBody,
+             Job: scrapJob.Name
+        );
+
+        await _notificationRepository.SendNotificationAsync(notification);
+    }
+
+    private static string GetHtmlBody(List<Ad> ads)
+    {
+        const string htmlStart = "<html><body>";
+        const string htmlEnd = "</body></html>";
+
+        var adsText = new StringBuilder();
+
+        adsText.AppendLine(htmlStart);
+
+        foreach (var ad in ads)
+            AddAdDetailsToHtml(adsText, ad);
+
+        adsText.AppendLine(htmlEnd);
+
+        return adsText.ToString();
+    }
+
+    private static void AddAdDetailsToHtml(StringBuilder adsText, Ad ad)
+    {
+        adsText.AppendLine($"<p><strong>{ad.Title}</strong></p>");
+        adsText.AppendLine($"<p><strong>Price:</strong> {ad.Price}</p>");
+        adsText.AppendLine($"<p><strong>Location and Date:</strong> {ad.LocationAndDate}</p>");
+        adsText.AppendLine($"<p><strong>Link:</strong> <a href='{ad.Url}'>{ad.Url}</a></p>");
+        adsText.AppendLine($"<p><img src='{ad.ThumbnailUrl}' alt='Thumbnail' /></p>");
+        adsText.AppendLine("<hr>");
+    }
+}

@@ -402,3 +402,14 @@ parameters.ps1
 
 Infra/parameters.json
 Infra/parameters.ps1
+
+# Terraform
+Infra/bootstrap/.terraform/
+Infra/bootstrap/terraform.tfstate*
+Infra/bootstrap/.terraform.lock.hcl
+Infra/terraform/.terraform/
+Infra/terraform/.terraform.lock.hcl
+*.tfvars
+
+# Plan file (generated, not committed)
+plan.md

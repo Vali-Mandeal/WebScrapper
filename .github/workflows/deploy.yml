@@ -1,0 +1,105 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  MASTER_IMAGE_NAME: ${{ github.repository_owner }}/webscrapper-master
+  SLAVE_IMAGE_NAME: ${{ github.repository_owner }}/webscrapper-slave
+
+jobs:
+  build-master:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.MASTER_IMAGE_NAME }}
+          tags: type=sha
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./src
+          file: ./src/WebScrapper.Master/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  build-slave:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.SLAVE_IMAGE_NAME }}
+          tags: type=sha
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./src
+          file: ./src/WebScrapper.Slave/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  deploy:
+    needs: [build-master, build-slave]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="master_image=${{ needs.build-master.outputs.image }}" \
+            -var="slave_image=${{ needs.build-slave.outputs.image }}" \
+            -var="key_vault_admin_object_id=${{ secrets.KEY_VAULT_ADMIN_OBJECT_ID }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
