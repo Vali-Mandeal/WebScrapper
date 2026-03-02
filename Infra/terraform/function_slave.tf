@@ -1,3 +1,9 @@
+resource "azurerm_user_assigned_identity" "slave" {
+  name                = "id-func-slave"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = data.azurerm_resource_group.main.location
+}
+
 # Slave Function App - hosted on Container Apps (consumption pricing)
 resource "azapi_resource" "function_slave" {
   type      = "Microsoft.Web/sites@2023-12-01"
@@ -6,7 +12,8 @@ resource "azapi_resource" "function_slave" {
   parent_id = data.azurerm_resource_group.main.id
 
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.slave.id]
   }
 
   body = {
@@ -36,23 +43,14 @@ resource "azapi_resource" "function_slave" {
           {
             name  = "KeyVaultConfig__Url"
             value = azurerm_key_vault.main.vault_uri
+          },
+          {
+            name  = "AZURE_CLIENT_ID"
+            value = azurerm_user_assigned_identity.slave.client_id
           }
         ]
       }
       clientAffinityEnabled = false
     }
   }
-
-}
-
-# Read identity separately to work around azapi provider bug
-# where identity data is lost on resource updates
-data "azapi_resource" "function_slave" {
-  type      = "Microsoft.Web/sites@2023-12-01"
-  name      = "func-webscrapper-slave"
-  parent_id = data.azurerm_resource_group.main.id
-
-  response_export_values = ["identity.principalId"]
-
-  depends_on = [azapi_resource.function_slave]
 }

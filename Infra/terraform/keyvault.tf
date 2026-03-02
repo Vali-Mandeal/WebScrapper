@@ -18,11 +18,10 @@ resource "azurerm_key_vault" "main" {
   }
 }
 
-# Separate access policies to break the cycle (functions -> KV -> functions)
 resource "azurerm_key_vault_access_policy" "master" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azapi_resource.function_master.output.identity.principalId
+  object_id    = azurerm_user_assigned_identity.master.principal_id
 
   secret_permissions = ["Get", "List"]
 }
@@ -30,7 +29,7 @@ resource "azurerm_key_vault_access_policy" "master" {
 resource "azurerm_key_vault_access_policy" "slave" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azapi_resource.function_slave.output.identity.principalId
+  object_id    = azurerm_user_assigned_identity.slave.principal_id
 
   secret_permissions = ["Get", "List"]
 }
