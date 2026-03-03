@@ -11,13 +11,14 @@ resource "azapi_resource" "function_slave" {
   location  = data.azurerm_resource_group.main.location
   parent_id = data.azurerm_resource_group.main.id
 
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.slave.id]
-  }
-
   body = {
     kind = "functionapp,linux,container,azurecontainerapps"
+    identity = {
+      type = "UserAssigned"
+      userAssignedIdentities = {
+        (azurerm_user_assigned_identity.slave.id) = {}
+      }
+    }
     properties = {
       managedEnvironmentId = azurerm_container_app_environment.main.id
       workloadProfileName  = "Consumption"
