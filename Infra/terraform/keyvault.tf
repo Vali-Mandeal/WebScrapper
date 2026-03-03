@@ -7,15 +7,16 @@ resource "azurerm_key_vault" "main" {
 
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
+}
 
-  # Admin full access
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = var.key_vault_admin_object_id
+# Admin full access
+resource "azurerm_key_vault_access_policy" "admin" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = var.key_vault_admin_object_id
 
-    secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
-    key_permissions    = ["Get", "List", "Create", "Import", "Delete", "Update", "Backup", "Restore", "Recover", "Purge"]
-  }
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
+  key_permissions    = ["Get", "List", "Create", "Import", "Delete", "Update", "Backup", "Restore", "Recover", "Purge"]
 }
 
 resource "azurerm_key_vault_access_policy" "master" {
