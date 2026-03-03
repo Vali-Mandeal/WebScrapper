@@ -27,6 +27,9 @@ resource "azapi_resource" "function_master" {
       }
       siteConfig = {
         linuxFxVersion = "DOCKER|${var.master_image}"
+        cors = {
+          allowedOrigins = ["https://portal.azure.com"]
+        }
         appSettings = [
           {
             name  = "FUNCTIONS_EXTENSION_VERSION"

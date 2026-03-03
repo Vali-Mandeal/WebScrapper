@@ -27,6 +27,9 @@ resource "azapi_resource" "function_slave" {
       }
       siteConfig = {
         linuxFxVersion = "DOCKER|${var.slave_image}"
+        cors = {
+          allowedOrigins = ["https://portal.azure.com"]
+        }
         appSettings = [
           {
             name  = "FUNCTIONS_EXTENSION_VERSION"
