@@ -1,6 +1,5 @@
-using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using WebScrapper.Shared.Entities;
 using WebScrapper.Shared.Services.Interfaces;
@@ -20,17 +19,17 @@ public class MasterFunction
 
     [Function("MasterFunction_HttpTrigger")]
     public async Task<HttpTriggerOutput> RunHttpTrigger(
-        [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
     {
+        _logger.LogInformation("HTTP trigger started at: {Now}", DateTime.UtcNow);
+
         var messages = await EnqueueScrapJobs();
 
-        var response = req.CreateResponse(System.Net.HttpStatusCode.OK);
-        response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-        await response.WriteStringAsync($"Enqueued {messages.Count} scrap jobs.");
+        _logger.LogInformation("HTTP trigger completed. Enqueued {Count} scrap jobs.", messages.Count);
 
         return new HttpTriggerOutput
         {
-            HttpResponse = response,
+            HttpResponse = TypedResults.Ok($"Enqueued {messages.Count} scrap jobs."),
             QueueMessages = messages
         };
     }
@@ -74,5 +73,5 @@ public class HttpTriggerOutput
     public List<ScrapJobQueueMessage> QueueMessages { get; set; } = [];
 
     [HttpResult]
-    public HttpResponseData HttpResponse { get; set; } = null!;
+    public IResult HttpResponse { get; set; } = null!;
 }
