@@ -413,3 +413,6 @@ Infra/terraform/.terraform.lock.hcl
 
 # Plan file (generated, not committed)
 plan.md
+
+# MCP config
+.mcp.json
