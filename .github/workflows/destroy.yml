@@ -37,7 +37,8 @@ jobs:
           terraform destroy -auto-approve \
             -var="master_image=placeholder" \
             -var="slave_image=placeholder" \
-            -var="key_vault_admin_object_id=${{ secrets.KEY_VAULT_ADMIN_OBJECT_ID }}"
+            -var="key_vault_admin_object_id=${{ secrets.KEY_VAULT_ADMIN_OBJECT_ID }}" \
+            -var="ghcr_token=placeholder"
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

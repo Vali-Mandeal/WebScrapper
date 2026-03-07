@@ -103,6 +103,7 @@ jobs:
             -var="master_image=${{ needs.build-master.outputs.image }}" \
             -var="slave_image=${{ needs.build-slave.outputs.image }}" \
             -var="key_vault_admin_object_id=${{ secrets.KEY_VAULT_ADMIN_OBJECT_ID }}" \
+            -var="ghcr_token=${{ secrets.GHCR_TOKEN }}" \
             -out=tfplan
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

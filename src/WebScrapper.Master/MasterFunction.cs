@@ -19,7 +19,7 @@ public class MasterFunction
 
     [Function("MasterFunction_HttpTrigger")]
     public async Task<HttpTriggerOutput> RunHttpTrigger(
-        [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
     {
         _logger.LogInformation("HTTP trigger started at: {Now}", DateTime.UtcNow);
 

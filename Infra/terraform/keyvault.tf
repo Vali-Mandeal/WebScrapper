@@ -9,11 +9,6 @@ resource "azurerm_key_vault" "main" {
   purge_protection_enabled   = false
 }
 
-import {
-  to = azurerm_key_vault_access_policy.admin
-  id = "${azurerm_key_vault.main.id}/objectId/${var.key_vault_admin_object_id}"
-}
-
 # Admin full access
 resource "azurerm_key_vault_access_policy" "admin" {
   key_vault_id = azurerm_key_vault.main.id

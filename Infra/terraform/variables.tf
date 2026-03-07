@@ -24,3 +24,9 @@ variable "slave_image" {
   description = "Full GHCR image reference for the slave function (e.g., ghcr.io/owner/webscrapper-slave:sha)"
   type        = string
 }
+
+variable "ghcr_token" {
+  description = "GitHub Container Registry token for pulling private images"
+  type        = string
+  sensitive   = true
+}
