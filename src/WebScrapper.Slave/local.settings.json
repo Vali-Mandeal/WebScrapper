@@ -7,7 +7,7 @@
   },
 
   "KeyVaultConfig": {
-    "Url": "https://webscrapper-function-kv.vault.azure.net/"
+    "Url": "https://kv-webscrapper.vault.azure.net/"
   },
 
   "DbSettings": {
@@ -18,8 +18,8 @@
   "SmtpSettings": {
     "SenderEmail": "<value-in-azure-key-vault>",
     "SenderPassword": "<value-in-azure-key-vault>",
-    "SmtpHost": "smtp.gmail.com",
-    "SmtpPort": "587",
-    "SecureSocketOptions": "StartTls"
+    "SmtpHost": "<value-in-azure-key-vault>",
+    "SmtpPort": "<value-in-azure-key-vault>",
+    "SecureSocketOptions": "<value-in-azure-key-vault>"
   }
 }

@@ -1,9 +1,9 @@
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using WebScrapper.Shared.Configuration;
 using WebScrapper.Shared.Extensions;
 using WebScrapper.Slave.Configuration;
 using WebScrapper.Slave.Repositories;
@@ -18,7 +18,9 @@ var host = new HostBuilder()
               .AddEnvironmentVariables();
 
         var builtConfig = config.Build();
-        config.AddLazyKeyVault(builtConfig["KeyVaultConfig:Url"]!, new DefaultAzureCredential());
+        var kvUrl = builtConfig["KeyVaultConfig:Url"];
+        if (!string.IsNullOrEmpty(kvUrl))
+            config.AddAzureKeyVault(new Uri(kvUrl), new DefaultAzureCredential(), new KeyVaultSecretManager());
     })
     .ConfigureFunctionsWebApplication()
     .ConfigureServices((context, services) =>
