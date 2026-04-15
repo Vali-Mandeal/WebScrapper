@@ -419,3 +419,6 @@ plan.md
 
 # JetBrains Rider / IntelliJ IDEA
 .idea/
+
+# Local SDK pin - machine specific
+global.json

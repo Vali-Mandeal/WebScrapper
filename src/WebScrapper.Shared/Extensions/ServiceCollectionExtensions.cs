@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using WebScrapper.Shared.Configuration;
 using WebScrapper.Shared.Repositories;
@@ -15,13 +16,15 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<DbSettings>(configuration.GetSection(DbSettings.Key));
 
-        var dbSettings = configuration.GetSection(DbSettings.Key).Get<DbSettings>();
-
-        services.AddSingleton<IMongoClient, MongoClient>(_ => new MongoClient(dbSettings!.MongoUrl));
+        services.AddSingleton<IMongoClient>(sp =>
+        {
+            var dbSettings = sp.GetRequiredService<IOptions<DbSettings>>().Value;
+            return new MongoClient(dbSettings.MongoUrl);
+        });
         services.AddSingleton(sp =>
         {
-            var client = sp.GetRequiredService<IMongoClient>();
-            return client.GetDatabase(dbSettings!.DatabaseName);
+            var dbSettings = sp.GetRequiredService<IOptions<DbSettings>>().Value;
+            return sp.GetRequiredService<IMongoClient>().GetDatabase(dbSettings.DatabaseName);
         });
 
         services.AddScoped<IScrapJobsRepository, ScrapJobsRepository>();
