@@ -62,10 +62,5 @@ internal class LazyKeyVaultConfigurationProvider(SecretClient client) : Configur
         {
             return NotFound;
         }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[LazyKeyVault] Failed to fetch secret '{secretName}': {ex.GetType().Name}: {ex.Message}");
-            return NotFound;
-        }
     }
 }
