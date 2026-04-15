@@ -416,3 +416,6 @@ plan.md
 
 # MCP config
 .mcp.json
+
+# JetBrains Rider / IntelliJ IDEA
+.idea/
