@@ -38,12 +38,15 @@ public class ScrapJobsRepository : IScrapJobsRepository
         try
         {
             var filter = Builders<ScrapJob>.Filter.Eq(x => x.Id, id);
-            return await _collection.Find(filter).FirstOrDefaultAsync();
+            var result = await _collection.Find(filter).FirstOrDefaultAsync();
+            if (result is null)
+                throw new InvalidOperationException($"ScrapJob with ID {id} not found in collection.");
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
-            return null!;
+            _logger.LogError(ex, "MongoDB operation failed: {Message}", ex.Message);
+            throw;
         }
     }
 

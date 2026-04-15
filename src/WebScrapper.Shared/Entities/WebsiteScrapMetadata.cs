@@ -31,9 +31,9 @@ public class MetadataSelectors
     public string AdUrlSelector { get; set; } = "";
 
 
-    public string ThumbnailUrlWrapperSelector = "";
-    public string ThumbnailUrlSelector = "";
+    public string ThumbnailUrlWrapperSelector { get; set; } = "";
+    public string ThumbnailUrlSelector { get; set; } = "";
 
-    public string BackupThumbnailUrlWrapperSelector = "";
-    public string BackupThumbnailUrlSelector = "";
+    public string BackupThumbnailUrlWrapperSelector { get; set; } = "";
+    public string BackupThumbnailUrlSelector { get; set; } = "";
 }
