@@ -22,13 +22,12 @@ public class AdsRepository : IAdsRepository
         try
         {
             var filterDefinition = filter != null ? Builders<Ad>.Filter.Eq(propertyName, filter) : Builders<Ad>.Filter.Empty;
-            var result = await _collection.Find(filterDefinition).ToListAsync();
-            return result;
+            return await _collection.Find(filterDefinition).ToListAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
-            return [];
+            _logger.LogError(ex, "MongoDB operation failed: {Message}", ex.Message);
+            throw;
         }
     }
 
@@ -40,7 +39,8 @@ public class AdsRepository : IAdsRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "MongoDB operation failed: {Message}", ex.Message);
+            throw;
         }
     }
 }
