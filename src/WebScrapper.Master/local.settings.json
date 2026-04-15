@@ -7,7 +7,7 @@
   },
 
   "KeyVaultConfig": {
-    "Url": "https://webscrapper-function-kv.vault.azure.net/"
+    "Url": "https://kv-webscrapper.vault.azure.net/"
   },
 
   "DbSettings": {

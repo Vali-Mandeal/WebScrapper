@@ -19,7 +19,12 @@ public static class ConfigurationBuilderExtensions
 internal class LazyKeyVaultConfigurationSource(Uri vaultUri, TokenCredential credential) : IConfigurationSource
 {
     public IConfigurationProvider Build(IConfigurationBuilder builder)
-        => new LazyKeyVaultConfigurationProvider(new SecretClient(vaultUri, credential));
+    {
+        var options = new SecretClientOptions();
+        options.Retry.MaxRetries = 0;
+        options.Retry.NetworkTimeout = TimeSpan.FromSeconds(3);
+        return new LazyKeyVaultConfigurationProvider(new SecretClient(vaultUri, credential, options));
+    }
 }
 
 internal class LazyKeyVaultConfigurationProvider(SecretClient client) : ConfigurationProvider
@@ -43,13 +48,23 @@ internal class LazyKeyVaultConfigurationProvider(SecretClient client) : Configur
 
     private string Fetch(string key)
     {
+        // KV secrets map to hierarchical config keys (e.g. DbSettings--MongoUrl → DbSettings:MongoUrl).
+        // Flat keys like "urls", "http_ports" can never be in KV — skip them immediately.
+        if (!key.Contains(':'))
+            return NotFound;
+
         var secretName = key.Replace(":", "--");
         try
         {
             return client.GetSecret(secretName).Value.Value;
         }
-        catch
+        catch (Azure.RequestFailedException ex) when (ex.Status == 404)
         {
+            return NotFound;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[LazyKeyVault] Failed to fetch secret '{secretName}': {ex.GetType().Name}: {ex.Message}");
             return NotFound;
         }
     }
